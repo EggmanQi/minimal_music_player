@@ -1,6 +1,9 @@
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:minimal_music_player/models/song.dart';
+
+typedef FileNotFoundCallback = void Function(bool fileExists);
 
 class PlaylistProvider extends ChangeNotifier {
   // PlaylistProvider() {
@@ -23,12 +26,23 @@ class PlaylistProvider extends ChangeNotifier {
   // });
   // }
 
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
   // Audio Player functions
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   // durations
   Duration _currentSongDuration = Duration.zero;
   Duration _totalDuration = Duration.zero;
+  // error handle
+  FileNotFoundCallback? _fileNotFoundCallback;
+  void registerFileNotFoundCallback(FileNotFoundCallback callback) {
+    _fileNotFoundCallback = callback;
+  }
 
   // constructor
   PlaylistProvider() {
@@ -44,9 +58,21 @@ class PlaylistProvider extends ChangeNotifier {
       stop();
     }
     final path = _playlist[_currentSongIndex ?? 0].audioPath;
-    await _audioPlayer.play(AssetSource(path));
-    _isPlaying = true;
-    notifyListeners();
+    bool fileExists = await assetExists('assets/$path');
+    if (fileExists) {
+      // 文件存在
+      if (_fileNotFoundCallback != null) {
+        _fileNotFoundCallback!(true);
+      }
+      await _audioPlayer.play(AssetSource(path));
+      _isPlaying = true;
+      notifyListeners();
+    } else {
+      // 文件不存在
+      if (_fileNotFoundCallback != null) {
+        _fileNotFoundCallback!(false);
+      }
+    }
   }
 
   // pause
@@ -129,10 +155,16 @@ class PlaylistProvider extends ChangeNotifier {
     });
 
     _audioPlayer.onPlayerStateChanged.listen((event) {
-      print(event);
+      // print(event);
     });
   }
-  // dispose audio player
+
+  bool isPlayingAt(int index) {
+    if (_currentSongIndex == index && _isPlaying) {
+      return true;
+    }
+    return false;
+  }
 
   // TODO: This should be a json and will load when app launch
   final List<Song> _playlist = [
@@ -164,5 +196,14 @@ class PlaylistProvider extends ChangeNotifier {
       play();
     }
     // notifyListeners();
+  }
+
+  Future<bool> assetExists(String assetName) async {
+    try {
+      await rootBundle.load(assetName);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }

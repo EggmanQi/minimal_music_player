@@ -3,7 +3,6 @@ import 'package:marquee/marquee.dart';
 import 'package:minimal_music_player/components/neu_box.dart';
 import 'package:minimal_music_player/models/playlist_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 
 import 'dart:ui' show ParagraphBuilder, ParagraphConstraints;
 
@@ -76,10 +75,10 @@ class _PlayerPageState extends State<PlayerPage> {
                     children: [
                       Image.asset(
                         currentSong.albumArtImagePath,
-                        fit: BoxFit.fill,
+                        fit: BoxFit.cover,
                         alignment: Alignment.center,
-                        width: screenWidth - 120,
-                        height: screenWidth - 120,
+                        width: screenWidth - 50,
+                        height: screenWidth - 50,
                       ),
                       // song name & artist name
                       Padding(

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:minimal_music_player/components/drawer.dart';
+import 'package:minimal_music_player/components/playlist_tile.dart';
 import 'package:minimal_music_player/models/playlist_provider.dart';
 import 'package:minimal_music_player/models/song.dart';
 import 'package:minimal_music_player/pages/player_page.dart';
 import 'package:provider/provider.dart';
-import 'player_bottom_bar.dart';
+import '../components/player_bottom_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -35,7 +36,7 @@ class _HomePageState extends State<HomePage> {
         title: const Text("P L A Y L I S T"),
       ),
       drawer: const MyDrawer(),
-      bottomNavigationBar: PlayerBottomBar(),
+      bottomNavigationBar: const PlayerBottomBar(),
       body: Consumer<PlaylistProvider>(
         builder: (context, value, child) {
           final List<Song> playList = value.playlist;
@@ -43,21 +44,25 @@ class _HomePageState extends State<HomePage> {
               itemCount: playList.length,
               itemBuilder: (context, index) {
                 final song = playList[index];
-                return ListTile(
-                  title: Text(song.songName),
-                  subtitle: Text(song.artistName),
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: SizedBox(
-                      width: 50,
-                      height: 50,
-                      child: Image.asset(
-                        song.albumArtImagePath,
-                        fit: BoxFit.cover,
+                value.registerFileNotFoundCallback((bool fileExists) {
+                  if (fileExists) {
+                    // goToSong(index);
+                  } else {
+                    // 文件不存在时的处理逻辑，例如显示一个提示框
+                    showDialog(
+                      context: context,
+                      builder: (context) => const AlertDialog(
+                        title: Text('错误'),
+                        content: Text('没有找到文件'),
                       ),
-                    ),
-                  ),
+                    );
+                  }
+                });
+                return PlaylistTile(
+                  song: song,
+                  isPlaying: value.isPlayingAt(index),
                   onTap: () {
+                    // value.play();
                     goToSong(index);
                   },
                 );
